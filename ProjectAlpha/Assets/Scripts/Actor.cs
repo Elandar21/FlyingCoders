@@ -5,6 +5,7 @@ using UnityEngine;
 public class Actor : MonoBehaviour {
 
     public float speed = 3.0f;
+    public bool curPlayer = false;
 
 	// Use this for initialization
 	void Start () {
@@ -13,7 +14,8 @@ public class Actor : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-        Movement();
+        if(curPlayer)
+            Movement();
 	}
 
     private void Movement()
@@ -27,5 +29,17 @@ public class Actor : MonoBehaviour {
         if(xAxis != 0.0f || zAxis != 0.0f)
             pos = new Vector3(transform.position.x + xAxis* spdTime,pos.y, transform.position.z + zAxis* spdTime);
         transform.position = pos;
+    }
+
+    public bool Shoot()
+    {
+        RaycastHit hit;
+
+        //TODO add the distance that the weapon can fire
+        if (Physics.Raycast(transform.position, Vector3.forward, out hit))
+        {
+            if(hit.transform.CompareTag("Player"))
+                hit.transform.GetComponent<Actor>().
+        }
     }
 }

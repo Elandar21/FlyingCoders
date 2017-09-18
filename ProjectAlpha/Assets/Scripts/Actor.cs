@@ -1,11 +1,16 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Networking;
 
-public class Actor : MonoBehaviour {
+public class Actor : NetworkBehaviour {
 
     public float speed = 3.0f;
+    public float rotation = 150.0f;
     public bool curPlayer = false;
+
+    public GameObject bulletPrefab;
+    public Transform bulletSpawn;
 
 	// Use this for initialization
 	void Start () {
@@ -14,32 +19,41 @@ public class Actor : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-        if(curPlayer)
-            Movement();
+        if (!isLocalPlayer)
+            return;
+
+        Movement();
+
+        if(Input.GetAxis("Fire1") != 0)
+            CmdShoot();
 	}
 
     private void Movement()
     {
-        var xAxis = Input.GetAxis("Horizontal");
-        var zAxis = Input.GetAxis("Vertical");
+        var yAxis = Input.GetAxis("Horizontal") * Time.deltaTime * rotation;
+        var zAxis = Input.GetAxis("Vertical") * Time.deltaTime * speed;
 
-        var spdTime = speed * Time.deltaTime;
-
-        Vector3 pos = transform.position;
-        if(xAxis != 0.0f || zAxis != 0.0f)
-            pos = new Vector3(transform.position.x + xAxis* spdTime,pos.y, transform.position.z + zAxis* spdTime);
-        transform.position = pos;
+        transform.Rotate(0, yAxis, 0);
+        transform.Translate(0, 0, zAxis);
     }
 
-    public bool Shoot()
+    [Command]
+    public void CmdShoot()
     {
-        RaycastHit hit;
+        var bullet = (GameObject)Instantiate(bulletPrefab,
+            bulletSpawn.position,
+            bulletSpawn.rotation);
 
-        //TODO add the distance that the weapon can fire
-        if (Physics.Raycast(transform.position, Vector3.forward, out hit))
-        {
-            if(hit.transform.CompareTag("Player"))
-                hit.transform.GetComponent<Actor>().
-        }
+        bullet.GetComponent<Rigidbody>().velocity = bullet.transform.forward * 6.0f; //TODO replace 6 with bullet speed
+
+        NetworkServer.Spawn(bullet);
+
+        Destroy(bullet, 2.0f); //TODO change life of bullet from 2.0f to bullet TTL
+    }
+
+    public override void OnStartLocalPlayer()
+    {
+        Camera.main.transform.parent = transform;
+        GetComponent<MeshRenderer>().material.color = Color.blue;
     }
 }
